@@ -84,7 +84,8 @@ function plotPoint(inputCoordinate)
     var barWidth = 0.00003;
     var barHeight = Math.random() * MAX_BAR_HEIGHT;
     var zoomLevel = window.map.zoom;
-
+    var barColor = '#FF0000';
+    //Configure bar width based on zoom level
     if (zoomLevel == MIN_ZOOM_LEVEL)
         barWidth = 0.00003;
     else if (zoomLevel == MIN_ZOOM_LEVEL+1)
@@ -95,6 +96,14 @@ function plotPoint(inputCoordinate)
         barWidth = 0.000009;
     else if (zoomLevel == MIN_ZOOM_LEVEL+4)
         barWidth = 0.000008;
+
+    //Configure bar color based on height
+    if (barHeight <= 0.000333)
+        barColor = '#E2C334';
+    else if (barHeight <= 0.000666)
+        barColor = '#C35226';
+    else
+        barColor = '#C12938';
 
     var inputlatitude = inputCoordinate.ob;
     var inputLongitude = inputCoordinate.pb;
@@ -109,10 +118,10 @@ function plotPoint(inputCoordinate)
     //Configure bar options
     var verticalBar = new google.maps.Polygon({
         paths: coordinates,
-        strokeColor: '#FF0000',
+        strokeColor: barColor,
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        fillColor: '#FF0000',
+        fillColor: barColor,
         fillOpacity: 0.4
       });
     verticalBar.setMap(window.map);
