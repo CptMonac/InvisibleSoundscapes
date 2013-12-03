@@ -22,7 +22,7 @@ function initialize()
     }
     ];
 
-    window.MIN_ZOOM_LEVEL = 17;                 //Set min zoom level
+    window.MIN_ZOOM_LEVEL = 15;                 //Set min zoom level
     window.MAX_ZOOM_LEVEL = 21;                 //Set max zoom level
     var mapOptions = {
       center: new google.maps.LatLng(HciLab[0], HciLab[1]),
@@ -37,44 +37,45 @@ function initialize()
     window.visiblePoints = [];
     var service = new google.maps.DirectionsService();
     var coordinate;
-    google.maps.event.addListener(map, 'click', function(evt)
-    {
-        //Display feedback on click position
-        var cursorLocation = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            strokeColor: '#FF0000',
-            fillColor: '#FF0000',
-            fillOpacity: 0.5
-        }
-        var marker = new google.maps.Marker(
-        {
-            position: evt.latLng,
-            map: window.map,
-            icon: cursorLocation
-        });
-        marker.setAnimation(google.maps.Animation.BOUNCE);
+    // google.maps.event.addListener(map, 'click', function(evt)
+    // {
+    //     //Display feedback on click position
+    //     var cursorLocation = {
+    //         path: google.maps.SymbolPath.CIRCLE,
+    //         scale: 8,
+    //         strokeColor: '#7F0000',
+    //         fillColor: '#FF4C4C',
+    //         fillOpacity: 0.5,
+    //         strokeOpacity: 0.5
+    //     }
+    //     var marker = new google.maps.Marker(
+    //     {
+    //         position: evt.latLng,
+    //         map: window.map,
+    //         icon: cursorLocation
+    //     });
+    //     marker.setAnimation(google.maps.Animation.BOUNCE);
 
-        service.route({ origin: evt.latLng, destination: evt.latLng, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
-        {
-            if (status == google.maps.DirectionsStatus.OK)
-            {
-                coordinate = result.routes[0].overview_path[0];
-                path.push(coordinate);
-                plotPoint(coordinate);
-            }
-            else
-                console.log('direction not ok');
-            marker.setAnimation(null);
-            marker.setMap(null);
-        });
-    });
-
+    //     service.route({ origin: evt.latLng, destination: evt.latLng, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
+    //     {
+    //         if (status == google.maps.DirectionsStatus.OK)
+    //         {
+    //             coordinate = result.routes[0].overview_path[0];
+    //             path.push(coordinate);
+    //             plotPoint(coordinate);
+    //         }
+    //         else
+    //             console.log('direction not ok');
+    //         marker.setAnimation(null);
+    //         marker.setMap(null);
+    //     });
+    // });
     google.maps.event.addListener(map, 'zoom_changed', function(evt)
     {
         scalePoints();
     });
 
+    getRoute();
 }    
 
 
@@ -143,6 +144,52 @@ function scalePoints()
         plotPoint(path[i]);
     }
 
+}
+
+function getRoute()
+{
+    var Cmu = [40.447423, -79.979867];
+    var HciLab = [40.445522,-79.949147];
+    var origin = new google.maps.LatLng(Cmu[0], Cmu[1]);
+    var destination = new google.maps.LatLng(HciLab[0], HciLab[1]);        
+    var service = new google.maps.DirectionsService();
+    var coordinate;
+    var Bounds = new  google.maps.LatLngBounds(origin, destination);
+     //Display feedback on click position
+    var cursorLocation = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        strokeColor: '#7F0000',
+        fillColor: '#FF4C4C',
+        fillOpacity: 0.5,
+        strokeOpacity: 0.5
+    }
+    var marker = new google.maps.Marker(
+    {
+        position: origin,
+        map: window.map,
+        icon: cursorLocation
+    });
+    marker.setAnimation(google.maps.Animation.BOUNCE);
+    //map.panToBounds(Bounds);
+    service.route({origin: origin, destination: destination, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
+    {
+            if (status == google.maps.DirectionsStatus.OK)
+            {
+                for (var i=0; i < result.routes[0].overview_path.length; i++)
+                {
+                    coordinate = result.routes[0].overview_path[i];
+                    marker.setPosition(coordinate);
+                    map.panTo(coordinate);
+                    path.push(coordinate);
+                    plotPoint(coordinate);
+                }
+            }
+            else
+                console.log('direction not ok');
+            marker.setAnimation(null);
+            //marker.setMap(null);
+    });
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
