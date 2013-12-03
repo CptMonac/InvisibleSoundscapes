@@ -1,4 +1,4 @@
-
+//Visualize invisible soundscapes of a city -- currently Pittsburgh
 function initialize()
 {
     var HciLab = [40.445522,-79.949147];        //HCI Institute Location
@@ -22,8 +22,8 @@ function initialize()
     }
     ];
 
-    window.MIN_ZOOM_LEVEL = 17;
-    window.MAX_ZOOM_LEVEL = 21;
+    window.MIN_ZOOM_LEVEL = 17;                 //Set min zoom level
+    window.MAX_ZOOM_LEVEL = 21;                 //Set max zoom level
     var mapOptions = {
       center: new google.maps.LatLng(HciLab[0], HciLab[1]),
       styles: lunarMapStyle,
@@ -39,6 +39,22 @@ function initialize()
     var coordinate;
     google.maps.event.addListener(map, 'click', function(evt)
     {
+        //Display feedback on click position
+        var cursorLocation = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            strokeColor: '#FF0000',
+            fillColor: '#FF0000',
+            fillOpacity: 0.5
+        }
+        var marker = new google.maps.Marker(
+        {
+            position: evt.latLng,
+            map: window.map,
+            icon: cursorLocation
+        });
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+
         service.route({ origin: evt.latLng, destination: evt.latLng, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
         {
             if (status == google.maps.DirectionsStatus.OK)
@@ -49,7 +65,8 @@ function initialize()
             }
             else
                 console.log('direction not ok');
-            
+            marker.setAnimation(null);
+            marker.setMap(null);
         });
     });
 
@@ -63,8 +80,9 @@ function initialize()
 
 function plotPoint(inputCoordinate)
 {
+    var MAX_BAR_HEIGHT = 0.0010;
     var barWidth = 0.00003;
-    var barHeight = 0.0003;
+    var barHeight = Math.random() * MAX_BAR_HEIGHT;
     var zoomLevel = window.map.zoom;
 
     if (zoomLevel == MIN_ZOOM_LEVEL)
