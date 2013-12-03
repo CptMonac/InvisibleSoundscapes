@@ -61,6 +61,22 @@ html, body, input {
   margin-top: 20px;
 }
 
+.project-container {
+  float: left;
+}
+
+#project-description {
+  width: 45%;
+  float: right;
+}
+
+#project-description h1 {
+  margin-bottom: 20px;
+  border-bottom: solid;
+  border-color: #FF6666;
+  max-width: 400px;
+  padding: 3px;
+}
 
 
 

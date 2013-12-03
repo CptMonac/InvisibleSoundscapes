@@ -123,8 +123,9 @@ function animatePoints()
 {
     if (pathCount == overview_path.length)
     {
-        clearInterval(timer);
-        return;
+        //clearInterval(timer);
+        //return;
+        pathCount = 0;
     }
     var coordinate = overview_path[pathCount];
     marker.setPosition(coordinate);
