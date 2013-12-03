@@ -1,8 +1,11 @@
 //Visualize invisible soundscapes of a city -- currently Pittsburgh
 function initialize()
 {
-    var HciLab = [40.445522,-79.949147];        //HCI Institute Location
-    var PittDowntown = [40.440625,-79.995886];  //Pittsburgh Center Location
+    //Load default locations
+    var HciLab = [40.445522,-79.949147];        //HCI Institute 
+    var PittDowntown = [40.440625,-79.995886];  //Pittsburgh Downtown
+    
+    //Style google maps
     var lunarMapStyle = [                       
     {
     	stylers: [
@@ -21,61 +24,29 @@ function initialize()
     	]
     }
     ];
-
-    window.MIN_ZOOM_LEVEL = 15;                 //Set min zoom level
-    window.MAX_ZOOM_LEVEL = 21;                 //Set max zoom level
+    
+    //Set map default controls
+    window.MIN_ZOOM_LEVEL = 15;                 
+    window.MAX_ZOOM_LEVEL = 21;                 
     var mapOptions = {
       center: new google.maps.LatLng(HciLab[0], HciLab[1]),
       styles: lunarMapStyle,
-      zoom: 18,
+      zoom: 16,
       disableDefaultUI: true,
       minZoom: MIN_ZOOM_LEVEL,
       maxZoom: MAX_ZOOM_LEVEL,
     };
-    window.map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-    window.path = [];
-    window.visiblePoints = [];
-    var service = new google.maps.DirectionsService();
-    var coordinate;
-    // google.maps.event.addListener(map, 'click', function(evt)
-    // {
-    //     //Display feedback on click position
-    //     var cursorLocation = {
-    //         path: google.maps.SymbolPath.CIRCLE,
-    //         scale: 8,
-    //         strokeColor: '#7F0000',
-    //         fillColor: '#FF4C4C',
-    //         fillOpacity: 0.5,
-    //         strokeOpacity: 0.5
-    //     }
-    //     var marker = new google.maps.Marker(
-    //     {
-    //         position: evt.latLng,
-    //         map: window.map,
-    //         icon: cursorLocation
-    //     });
-    //     marker.setAnimation(google.maps.Animation.BOUNCE);
 
-    //     service.route({ origin: evt.latLng, destination: evt.latLng, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
-    //     {
-    //         if (status == google.maps.DirectionsStatus.OK)
-    //         {
-    //             coordinate = result.routes[0].overview_path[0];
-    //             path.push(coordinate);
-    //             plotPoint(coordinate);
-    //         }
-    //         else
-    //             console.log('direction not ok');
-    //         marker.setAnimation(null);
-    //         marker.setMap(null);
-    //     });
-    // });
+    //Create map and add event listeners
+    window.map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+    window.route = [];                //Route from origin to destination
+    window.noiseData = [];            //Recorded noise data for route
     google.maps.event.addListener(map, 'zoom_changed', function(evt)
     {
         scalePoints();
     });
 
-    getRoute();
+    importData();                     //Import recorded noise data
 }    
 
 
@@ -86,6 +57,7 @@ function plotPoint(inputCoordinate)
     var barHeight = Math.random() * MAX_BAR_HEIGHT;
     var zoomLevel = window.map.zoom;
     var barColor = '#FF0000';
+    
     //Configure bar width based on zoom level
     if (zoomLevel == MIN_ZOOM_LEVEL)
         barWidth = 0.00003;
@@ -95,17 +67,18 @@ function plotPoint(inputCoordinate)
         barWidth = 0.00001;
     else if (zoomLevel == MIN_ZOOM_LEVEL+3)
         barWidth = 0.000009;
-    else if (zoomLevel == MIN_ZOOM_LEVEL+4)
+    else if (zoomLevel >= MIN_ZOOM_LEVEL+4)
         barWidth = 0.000008;
 
-    //Configure bar color based on height
+    //Configure bar color based on magnitude of noise data
     if (barHeight <= 0.000333)
-        barColor = '#E2C334';
+        barColor = '#E2C334';   //Color Yellow
     else if (barHeight <= 0.000666)
-        barColor = '#C35226';
+        barColor = '#C35226';   //Color Orange
     else
-        barColor = '#C12938';
+        barColor = '#C12938';   //Color Red
 
+    //Construct bar graph
     var inputlatitude = inputCoordinate.ob;
     var inputLongitude = inputCoordinate.pb;
     var coordinates = [
@@ -126,36 +99,63 @@ function plotPoint(inputCoordinate)
         fillOpacity: 0.4
       });
     verticalBar.setMap(window.map);
-    window.visiblePoints.push(verticalBar);
+    window.noiseData.push(verticalBar);
 }
 
 function scalePoints()
 {
-    //Clear visible bars
-    for(var i = 0; i < visiblePoints.length; i++)
+    //Clear visible noise data
+    for(var i = 0; i < noiseData.length; i++)
     {
-        window.visiblePoints[i].setMap(null);
+        window.noiseData[i].setMap(null);
     }
-    window.visiblePoints = [];
+    window.noiseData = [];
 
-    //Plot points at new zoom level
-    for (var i=0; i < path.length; i++)
+    //Plot data at new zoom level
+    for (var i=0; i < route.length; i++)
     {
-        plotPoint(path[i]);
+        plotPoint(route[i]);
     }
 
 }
 
-function getRoute()
+function animatePoints()
 {
+    if (pathCount == overview_path.length)
+    {
+        clearInterval(timer);
+        return;
+    }
+    var coordinate = overview_path[pathCount];
+    marker.setPosition(coordinate);
+    map.panTo(coordinate);
+    route.push(coordinate);
+    plotPoint(coordinate);
+
+    //Update time
+    var mapTime = document.getElementById('collection-time');
+    var date = new Date();
+    var currTime = "Dec. 10 " +  date.getMinutes().toString() + ":" + date.getSeconds().toString();
+    mapTime.innerHTML = currTime;
+    pathCount = pathCount + 1;
+}
+
+function importData()
+{
+    //Load default locations
     var Cmu = [40.447423, -79.979867];
     var HciLab = [40.445522,-79.949147];
+    //Create google lat,lon map objects
     var origin = new google.maps.LatLng(Cmu[0], Cmu[1]);
-    var destination = new google.maps.LatLng(HciLab[0], HciLab[1]);        
+    var destination = new google.maps.LatLng(HciLab[0], HciLab[1]);  
+    var mapBounds = new google.maps.LatLngBounds(origin, destination);      
+    //Create google directions service -- to get locations of streets
     var service = new google.maps.DirectionsService();
+    
     var coordinate;
-    var Bounds = new  google.maps.LatLngBounds(origin, destination);
-     //Display feedback on click position
+    window.overview_path = null;
+    
+    //Display marker for new coordinates
     var cursorLocation = {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
@@ -164,31 +164,29 @@ function getRoute()
         fillOpacity: 0.5,
         strokeOpacity: 0.5
     }
-    var marker = new google.maps.Marker(
+    window.marker = new google.maps.Marker(
     {
         position: origin,
         map: window.map,
         icon: cursorLocation
     });
-    marker.setAnimation(google.maps.Animation.BOUNCE);
-    //map.panToBounds(Bounds);
+    //Resize map to contain origin and destination endpoints
+    map.panToBounds(mapBounds);
+
+    //Get route information and location of streets
     service.route({origin: origin, destination: destination, travelMode: google.maps.DirectionsTravelMode.DRIVING }, function(result, status)
     {
             if (status == google.maps.DirectionsStatus.OK)
             {
-                for (var i=0; i < result.routes[0].overview_path.length; i++)
-                {
-                    coordinate = result.routes[0].overview_path[i];
-                    marker.setPosition(coordinate);
-                    map.panTo(coordinate);
-                    path.push(coordinate);
-                    plotPoint(coordinate);
-                }
+                window.overview_path = result.routes[0].overview_path;
+                window.pathCount = 0;
+                window.timer = setInterval(animatePoints, 100);
             }
             else
-                console.log('direction not ok');
-            marker.setAnimation(null);
-            //marker.setMap(null);
+            {
+                alert('Google directions request failed! Please refresh to try again');
+                console.log('Route information request failed!');
+            }
     });
 }
 
